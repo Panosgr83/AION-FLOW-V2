@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { FileText, Hash, Sparkles, Plus, Trash2, X, ChevronUp, ChevronDown, GripVertical, Eye, EyeOff, Save, Check, Heart, Star, Award, Clock, Coffee, Leaf, Sun, Shield, ThumbsUp, Users, Truck, MapPin, Phone, Gift, Flame, Crown, Target, Zap, Gem, type LucideIcon } from 'lucide-react';
 import { pageContentHelper, statsCountersHelper, featuresHelper } from '../../lib/dataHelpers';
+import { supabase } from '../../lib/supabase';
 import { StatsCounter, Feature } from '../../types/supabase';
 
 type TabId = 'about' | 'stats' | 'features';
@@ -371,11 +372,17 @@ function FeaturesTab() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const savingRef = useRef(false);
+  const featuresRef = useRef<Feature[]>([]);
+
+  featuresRef.current = features;
 
   useEffect(() => {
+    let cancelled = false;
     featuresHelper.getAll()
-      .then(data => { setFeatures(data); setLoading(false); })
-      .catch(err => { console.error('[FeaturesTab] getAll error:', err); setLoading(false); });
+      .then(data => { if (!cancelled) { setFeatures(data); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, []);
 
   const openAdd = () => { setEditing(null); setForm({ icon: 'Star', title: '', description: '', is_active: true }); setSaveError(null); setShowModal(true); };
@@ -386,50 +393,76 @@ function FeaturesTab() {
     setShowModal(true);
   };
 
-  const handleSave = async () => {
+  const persistFeatures = useCallback(async (items: Feature[]) => {
+    const { error } = await supabase.from('page_contents')
+      .update({ metadata: { items }, updated_at: new Date().toISOString() })
+      .eq('page_key', 'features');
+    if (error) throw new Error(error.message);
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setSaveError(null);
     try {
       const payload = { icon: form.icon, title: form.title, description: form.description, is_active: form.is_active };
+      let newList: Feature[];
       if (editing) {
-        const updated = await featuresHelper.update(editing.id, payload);
-        setFeatures(prev => prev.map(f => f.id === editing.id ? updated : f));
+        const updatedItem: Feature = { ...editing, ...payload, updated_at: new Date().toISOString() };
+        newList = featuresRef.current.map(f => f.id === editing.id ? updatedItem : f);
       } else {
-        const maxPos = features.reduce((max, f) => Math.max(max, f.order_position), 0);
-        const created = await featuresHelper.create({ ...payload, order_position: maxPos + 1 });
-        setFeatures(prev => [...prev, created]);
+        const maxPos = featuresRef.current.reduce((max, f) => Math.max(max, f.order_position), 0);
+        const newItem: Feature = {
+          id: crypto.randomUUID(),
+          icon: form.icon,
+          title: form.title,
+          description: form.description,
+          order_position: maxPos + 1,
+          is_active: form.is_active,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        newList = [...featuresRef.current, newItem];
       }
+      await persistFeatures(newList);
+      setFeatures(newList);
       setShowModal(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Άγνωστο σφάλμα';
       setSaveError(msg);
     } finally {
       setSaving(false);
+      savingRef.current = false;
     }
-  };
+  }, [form, editing, persistFeatures]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!deleteId) return;
-    await featuresHelper.delete(deleteId);
-    setFeatures(prev => prev.filter(f => f.id !== deleteId));
+    const newList = featuresRef.current.filter(f => f.id !== deleteId);
+    await persistFeatures(newList);
+    setFeatures(newList);
     setDeleteId(null);
-  };
+  }, [deleteId, persistFeatures]);
 
-  const toggleActive = async (feature: Feature) => {
-    const updated = await featuresHelper.update(feature.id, { is_active: !feature.is_active });
-    setFeatures(prev => prev.map(f => f.id === feature.id ? updated : f));
-  };
+  const toggleActive = useCallback(async (feature: Feature) => {
+    const newList = featuresRef.current.map(f =>
+      f.id === feature.id ? { ...f, is_active: !f.is_active, updated_at: new Date().toISOString() } : f
+    );
+    setFeatures(newList);
+    await persistFeatures(newList);
+  }, [persistFeatures]);
 
-  const moveItem = async (id: string, direction: 'up' | 'down') => {
-    const idx = features.findIndex(f => f.id === id);
-    if ((direction === 'up' && idx === 0) || (direction === 'down' && idx === features.length - 1)) return;
+  const moveItem = useCallback(async (id: string, direction: 'up' | 'down') => {
+    const idx = featuresRef.current.findIndex(f => f.id === id);
+    if ((direction === 'up' && idx === 0) || (direction === 'down' && idx === featuresRef.current.length - 1)) return;
     const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-    const newList = [...features];
+    const newList = [...featuresRef.current];
     [newList[idx], newList[swapIdx]] = [newList[swapIdx], newList[idx]];
-    const updates = newList.map((f, i) => ({ id: f.id, order_position: i + 1 }));
-    setFeatures(newList.map((f, i) => ({ ...f, order_position: i + 1 })));
-    await featuresHelper.updateOrder(updates);
-  };
+    const reordered = newList.map((f, i) => ({ ...f, order_position: i + 1 }));
+    setFeatures(reordered);
+    await persistFeatures(reordered);
+  }, [persistFeatures]);
 
   if (loading) {
     return <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>;
