@@ -417,8 +417,9 @@ export const slidesHelper = {
       mockSlides.push(newSlide);
       return newSlide;
     }
-    const { data, error } = await supabase.from('slides').insert(slide).select().single();
+    const { data, error } = await supabase.from('slides').insert(slide).select().maybeSingle();
     if (error) throw error;
+    if (!data) throw new Error('Insert succeeded but no data returned');
     return data;
   },
 
@@ -429,8 +430,9 @@ export const slidesHelper = {
       if (idx !== -1) mockSlides[idx] = { ...mockSlides[idx], ...updates, updated_at: new Date().toISOString() };
       return mockSlides[idx];
     }
-    const { data, error } = await supabase.from('slides').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+    const { data, error } = await supabase.from('slides').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().maybeSingle();
     if (error) throw error;
+    if (!data) throw new Error('Update failed - no data returned');
     return data;
   },
 
@@ -517,8 +519,9 @@ export const statsCountersHelper = {
       mockStatsCounters.push(newCounter);
       return newCounter;
     }
-    const { data, error } = await supabase.from('stats_counters').insert(counter).select().single();
+    const { data, error } = await supabase.from('stats_counters').insert(counter).select().maybeSingle();
     if (error) throw error;
+    if (!data) throw new Error('Insert succeeded but no data returned');
     return data;
   },
 
@@ -529,8 +532,9 @@ export const statsCountersHelper = {
       if (idx !== -1) mockStatsCounters[idx] = { ...mockStatsCounters[idx], ...updates, updated_at: new Date().toISOString() };
       return mockStatsCounters[idx];
     }
-    const { data, error } = await supabase.from('stats_counters').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+    const { data, error } = await supabase.from('stats_counters').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().maybeSingle();
     if (error) throw error;
+    if (!data) throw new Error('Update failed - no data returned');
     return data;
   },
 
@@ -578,8 +582,9 @@ export const featuresHelper = {
       mockFeatures.push(newFeature);
       return newFeature;
     }
-    const { data, error } = await supabase.from('features').insert(feature).select().single();
+    const { data, error } = await supabase.from('features').insert(feature).select().maybeSingle();
     if (error) throw error;
+    if (!data) throw new Error('Insert succeeded but no data returned');
     return data;
   },
 
@@ -590,8 +595,9 @@ export const featuresHelper = {
       if (idx !== -1) mockFeatures[idx] = { ...mockFeatures[idx], ...updates, updated_at: new Date().toISOString() };
       return mockFeatures[idx];
     }
-    const { data, error } = await supabase.from('features').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+    const { data, error } = await supabase.from('features').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().maybeSingle();
     if (error) throw error;
+    if (!data) throw new Error('Update failed - no data returned');
     return data;
   },
 
