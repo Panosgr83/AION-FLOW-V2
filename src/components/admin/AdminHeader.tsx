@@ -10,6 +10,8 @@ const titles: Record<string, string> = {
   '/dashboard/customers': 'Πελάτες',
   '/dashboard/analytics': 'Αναλυτικά Στοιχεία',
   '/dashboard/media': 'Πολυμέσα',
+  '/dashboard/slider': 'Hero Slider',
+  '/dashboard/content': 'Περιεχόμενο',
   '/dashboard/profile': 'Προφίλ',
   '/dashboard/settings': 'Ρυθμίσεις',
 };
