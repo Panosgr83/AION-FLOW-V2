@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FileText, Hash, Sparkles, Plus, Trash2, X, ChevronUp, ChevronDown, GripVertical, Eye, EyeOff, Save, Check, Heart, Star, Award, Clock, Coffee, Leaf, Sun, Shield, ThumbsUp, Users, Truck, MapPin, Phone, Gift, Flame, Crown, Target, Zap, Gem, type LucideIcon } from 'lucide-react';
-import { pageContentHelper, statsCountersHelper, featuresHelper } from '../../lib/dataHelpers';
+import { pageContentHelper, statsCountersHelper } from '../../lib/dataHelpers';
 import { supabase } from '../../lib/supabase';
 import { StatsCounter, Feature } from '../../types/supabase';
 
@@ -374,9 +374,13 @@ function FeaturesTab() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    featuresHelper.getAll()
-      .then(data => { setFeatures(data); setLoading(false); })
-      .catch(() => { setLoading(false); });
+    supabase.from('page_contents').select('content').eq('page_key', 'features').maybeSingle()
+      .then(({ data, error }) => {
+        if (error) { console.error('[FeaturesTab] load error:', error); setLoading(false); return; }
+        const items: Feature[] = data?.content ? JSON.parse(data.content) : [];
+        setFeatures(items.sort((a, b) => a.order_position - b.order_position));
+        setLoading(false);
+      });
   }, []);
 
   const openAdd = () => { setEditing(null); setForm({ icon: 'Star', title: '', description: '', is_active: true }); setSaveError(null); setShowModal(true); };
@@ -391,16 +395,15 @@ function FeaturesTab() {
     setSaving(true);
     setSaveError(null);
     try {
-      const payload = { icon: form.icon, title: form.title, description: form.description, is_active: form.is_active };
       let newList: Feature[];
       if (editing) {
         newList = features.map(f => f.id === editing.id
-          ? { ...f, ...payload, updated_at: new Date().toISOString() }
+          ? { ...f, icon: form.icon, title: form.title, description: form.description, is_active: form.is_active, updated_at: new Date().toISOString() }
           : f
         );
       } else {
         const maxPos = features.reduce((max, f) => Math.max(max, f.order_position), 0);
-        const newItem: Feature = {
+        newList = [...features, {
           id: crypto.randomUUID(),
           icon: form.icon,
           title: form.title,
@@ -409,67 +412,37 @@ function FeaturesTab() {
           is_active: form.is_active,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        };
-        newList = [...features, newItem];
+        }];
       }
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/page_contents?page_key=eq.features`;
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const res = await fetch(url, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${token}`,
-          'Prefer': 'return=minimal',
-        },
-        body: JSON.stringify({ metadata: { items: newList }, updated_at: new Date().toISOString() }),
-      });
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Save failed (${res.status}): ${errText}`);
-      }
+      const { error } = await supabase.from('page_contents')
+        .update({ content: JSON.stringify(newList) })
+        .eq('page_key', 'features');
+      if (error) throw new Error(error.message);
       setFeatures(newList);
       setShowModal(false);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Άγνωστο σφάλμα';
+      const msg = err instanceof Error ? err.message : 'Unknown error';
       setSaveError(msg);
     } finally {
       setSaving(false);
     }
   };
 
-  const persistList = async (items: Feature[]) => {
-    const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/page_contents?page_key=eq.features`;
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
-    const res = await fetch(url, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${token}`,
-        'Prefer': 'return=minimal',
-      },
-      body: JSON.stringify({ metadata: { items }, updated_at: new Date().toISOString() }),
-    });
-    if (!res.ok) throw new Error(`Save failed (${res.status})`);
-  };
-
   const handleDelete = async () => {
     if (!deleteId) return;
     const newList = features.filter(f => f.id !== deleteId);
-    await persistList(newList);
-    setFeatures(newList);
-    setDeleteId(null);
+    const { error } = await supabase.from('page_contents')
+      .update({ content: JSON.stringify(newList) })
+      .eq('page_key', 'features');
+    if (!error) { setFeatures(newList); setDeleteId(null); }
   };
 
   const toggleActive = async (feature: Feature) => {
     const newList = features.map(f =>
-      f.id === feature.id ? { ...f, is_active: !f.is_active, updated_at: new Date().toISOString() } : f
+      f.id === feature.id ? { ...f, is_active: !f.is_active } : f
     );
     setFeatures(newList);
-    await persistList(newList);
+    await supabase.from('page_contents').update({ content: JSON.stringify(newList) }).eq('page_key', 'features');
   };
 
   const moveItem = async (id: string, direction: 'up' | 'down') => {
@@ -480,7 +453,7 @@ function FeaturesTab() {
     [newList[idx], newList[swapIdx]] = [newList[swapIdx], newList[idx]];
     const reordered = newList.map((f, i) => ({ ...f, order_position: i + 1 }));
     setFeatures(reordered);
-    await persistList(reordered);
+    await supabase.from('page_contents').update({ content: JSON.stringify(reordered) }).eq('page_key', 'features');
   };
 
   if (loading) {
@@ -546,6 +519,7 @@ function FeaturesTab() {
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">Icon</label>
                 <div className="relative">
                   <button
+                    type="button"
                     onClick={() => setShowIconPicker(!showIconPicker)}
                     className="input flex items-center gap-2 cursor-pointer text-left"
                   >
@@ -556,6 +530,7 @@ function FeaturesTab() {
                     <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-xl p-3 z-20 grid grid-cols-6 gap-1.5 max-h-48 overflow-y-auto">
                       {ICON_OPTIONS.map(icon => (
                         <button
+                          type="button"
                           key={icon}
                           onClick={() => { setForm(prev => ({ ...prev, icon })); setShowIconPicker(false); }}
                           className={`p-2 rounded-lg flex items-center justify-center transition-colors ${form.icon === icon ? 'bg-blue-600/30 text-blue-400' : 'hover:bg-gray-700 text-gray-400'}`}
