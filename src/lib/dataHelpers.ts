@@ -507,9 +507,18 @@ export const statsCountersHelper = {
       await delay(300);
       return [...mockStatsCounters].sort((a, b) => a.order_position - b.order_position);
     }
-    const { data, error } = await supabase.from('stats_counters').select('*').order('order_position');
+    const { data, error } = await supabase.from('page_contents').select('metadata').eq('page_key', 'stats_counters').maybeSingle();
     if (error) throw error;
-    return data ?? [];
+    const items = (data?.metadata as { items?: StatsCounter[] } | null)?.items ?? [];
+    return items.sort((a, b) => a.order_position - b.order_position);
+  },
+
+  async _save(items: StatsCounter[]): Promise<void> {
+    const { error } = await supabase.from('page_contents').upsert(
+      { page_key: 'stats_counters', title: 'Stats Counters', content: '', metadata: { items }, updated_at: new Date().toISOString() },
+      { onConflict: 'page_key' }
+    );
+    if (error) throw new Error(`stats_counters save: ${error.message}`);
   },
 
   async create(counter: Partial<StatsCounter>): Promise<StatsCounter> {
@@ -519,10 +528,20 @@ export const statsCountersHelper = {
       mockStatsCounters.push(newCounter);
       return newCounter;
     }
-    const res = await supabase.from('stats_counters').insert(counter).select();
-    if (res.error) throw new Error(`stats_counters insert: ${res.error.message}`);
-    if (!res.data || res.data.length === 0) throw new Error('stats_counters insert: no rows returned');
-    return res.data[0];
+    const all = await this.getAll();
+    const newItem: StatsCounter = {
+      id: crypto.randomUUID(),
+      label: counter.label ?? '',
+      value: counter.value ?? '0',
+      suffix: counter.suffix ?? null,
+      order_position: counter.order_position ?? all.length,
+      is_active: counter.is_active ?? true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    all.push(newItem);
+    await this._save(all);
+    return newItem;
   },
 
   async update(id: string, updates: Partial<StatsCounter>): Promise<StatsCounter> {
@@ -532,10 +551,12 @@ export const statsCountersHelper = {
       if (idx !== -1) mockStatsCounters[idx] = { ...mockStatsCounters[idx], ...updates, updated_at: new Date().toISOString() };
       return mockStatsCounters[idx];
     }
-    const res = await supabase.from('stats_counters').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select();
-    if (res.error) throw new Error(`stats_counters update: ${res.error.message}`);
-    if (!res.data || res.data.length === 0) throw new Error('stats_counters update: no rows returned');
-    return res.data[0];
+    const all = await this.getAll();
+    const idx = all.findIndex(s => s.id === id);
+    if (idx === -1) throw new Error('stats_counters update: item not found');
+    all[idx] = { ...all[idx], ...updates, updated_at: new Date().toISOString() };
+    await this._save(all);
+    return all[idx];
   },
 
   async delete(id: string): Promise<void> {
@@ -545,8 +566,9 @@ export const statsCountersHelper = {
       if (idx !== -1) mockStatsCounters.splice(idx, 1);
       return;
     }
-    const { error } = await supabase.from('stats_counters').delete().eq('id', id);
-    if (error) throw error;
+    const all = await this.getAll();
+    const filtered = all.filter(s => s.id !== id);
+    await this._save(filtered);
   },
 
   async updateOrder(updates: { id: string; order_position: number }[]): Promise<void> {
@@ -558,9 +580,12 @@ export const statsCountersHelper = {
       }
       return;
     }
+    const all = await this.getAll();
     for (const u of updates) {
-      await supabase.from('stats_counters').update({ order_position: u.order_position, updated_at: new Date().toISOString() }).eq('id', u.id);
+      const idx = all.findIndex(s => s.id === u.id);
+      if (idx !== -1) all[idx].order_position = u.order_position;
     }
+    await this._save(all);
   },
 };
 
@@ -570,9 +595,18 @@ export const featuresHelper = {
       await delay(300);
       return [...mockFeatures].sort((a, b) => a.order_position - b.order_position);
     }
-    const { data, error } = await supabase.from('features').select('*').order('order_position');
+    const { data, error } = await supabase.from('page_contents').select('metadata').eq('page_key', 'features').maybeSingle();
     if (error) throw error;
-    return data ?? [];
+    const items = (data?.metadata as { items?: Feature[] } | null)?.items ?? [];
+    return items.sort((a, b) => a.order_position - b.order_position);
+  },
+
+  async _save(items: Feature[]): Promise<void> {
+    const { error } = await supabase.from('page_contents').upsert(
+      { page_key: 'features', title: 'Features', content: '', metadata: { items }, updated_at: new Date().toISOString() },
+      { onConflict: 'page_key' }
+    );
+    if (error) throw new Error(`features save: ${error.message}`);
   },
 
   async create(feature: Partial<Feature>): Promise<Feature> {
@@ -582,10 +616,20 @@ export const featuresHelper = {
       mockFeatures.push(newFeature);
       return newFeature;
     }
-    const res = await supabase.from('features').insert(feature).select();
-    if (res.error) throw new Error(`features insert: ${res.error.message}`);
-    if (!res.data || res.data.length === 0) throw new Error('features insert: no rows returned');
-    return res.data[0];
+    const all = await this.getAll();
+    const newItem: Feature = {
+      id: crypto.randomUUID(),
+      icon: feature.icon ?? 'Star',
+      title: feature.title ?? '',
+      description: feature.description ?? '',
+      order_position: feature.order_position ?? all.length,
+      is_active: feature.is_active ?? true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    all.push(newItem);
+    await this._save(all);
+    return newItem;
   },
 
   async update(id: string, updates: Partial<Feature>): Promise<Feature> {
@@ -595,10 +639,12 @@ export const featuresHelper = {
       if (idx !== -1) mockFeatures[idx] = { ...mockFeatures[idx], ...updates, updated_at: new Date().toISOString() };
       return mockFeatures[idx];
     }
-    const res = await supabase.from('features').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select();
-    if (res.error) throw new Error(`features update: ${res.error.message}`);
-    if (!res.data || res.data.length === 0) throw new Error('features update: no rows returned');
-    return res.data[0];
+    const all = await this.getAll();
+    const idx = all.findIndex(f => f.id === id);
+    if (idx === -1) throw new Error('features update: item not found');
+    all[idx] = { ...all[idx], ...updates, updated_at: new Date().toISOString() };
+    await this._save(all);
+    return all[idx];
   },
 
   async delete(id: string): Promise<void> {
@@ -608,8 +654,9 @@ export const featuresHelper = {
       if (idx !== -1) mockFeatures.splice(idx, 1);
       return;
     }
-    const { error } = await supabase.from('features').delete().eq('id', id);
-    if (error) throw error;
+    const all = await this.getAll();
+    const filtered = all.filter(f => f.id !== id);
+    await this._save(filtered);
   },
 
   async updateOrder(updates: { id: string; order_position: number }[]): Promise<void> {
@@ -621,8 +668,11 @@ export const featuresHelper = {
       }
       return;
     }
+    const all = await this.getAll();
     for (const u of updates) {
-      await supabase.from('features').update({ order_position: u.order_position, updated_at: new Date().toISOString() }).eq('id', u.id);
+      const idx = all.findIndex(f => f.id === u.id);
+      if (idx !== -1) all[idx].order_position = u.order_position;
     }
+    await this._save(all);
   },
 };
