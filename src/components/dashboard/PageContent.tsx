@@ -390,16 +390,18 @@ function FeaturesTab() {
     setSaving(true);
     setSaveError(null);
     console.log('[FeaturesTab] handleSave called, editing:', !!editing);
+    const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout: η αποθήκευση δεν ολοκληρώθηκε σε 15 δευτερόλεπτα')), 15000));
     try {
       const payload = { icon: form.icon, title: form.title, description: form.description, is_active: form.is_active };
       console.log('[FeaturesTab] payload:', JSON.stringify(payload));
       if (editing) {
-        const updated = await featuresHelper.update(editing.id, payload);
+        const updated = await Promise.race([featuresHelper.update(editing.id, payload), timeout]);
         console.log('[FeaturesTab] update success:', updated);
         setFeatures(prev => prev.map(f => f.id === editing.id ? updated : f));
       } else {
         const maxPos = features.reduce((max, f) => Math.max(max, f.order_position), 0);
-        const created = await featuresHelper.create({ ...payload, order_position: maxPos + 1 });
+        console.log('[FeaturesTab] calling create...');
+        const created = await Promise.race([featuresHelper.create({ ...payload, order_position: maxPos + 1 }), timeout]);
         console.log('[FeaturesTab] create success:', created);
         setFeatures(prev => [...prev, created]);
       }
