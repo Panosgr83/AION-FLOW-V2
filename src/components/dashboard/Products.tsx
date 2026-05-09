@@ -3,7 +3,7 @@ import { Plus, Search, CreditCard as Edit2, Trash2, X, Package, Star } from 'luc
 import { productsHelper, categoriesHelper } from '../../lib/dataHelpers';
 import { Product, Category } from '../../types/supabase';
 
-const emptyForm = { name: '', slug: '', description: '', price: '', compare_price: '', sku: '', stock_quantity: '', category_id: '', image_url: '', is_active: true, is_featured: false };
+const emptyForm = { name: '', slug: '', description: '', price: '', compare_price: '', sku: '', stock_quantity: '', category_id: '', image_url: '', is_active: true, is_featured: false, track_inventory: true };
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -42,6 +42,7 @@ export default function Products() {
       compare_price: p.compare_price?.toString() ?? '', sku: p.sku,
       stock_quantity: p.stock_quantity.toString(), category_id: p.category_id ?? '',
       image_url: p.image_url, is_active: p.is_active, is_featured: p.is_featured,
+      track_inventory: p.track_inventory,
     });
     setShowModal(true);
   };
@@ -53,6 +54,7 @@ export default function Products() {
       description: form.description, price: parseFloat(form.price) || 0,
       compare_price: form.compare_price ? parseFloat(form.compare_price) : null,
       sku: form.sku, stock_quantity: parseInt(form.stock_quantity) || 0,
+      track_inventory: form.track_inventory,
       category_id: form.category_id || null, image_url: form.image_url,
       is_active: form.is_active, is_featured: form.is_featured,
     };
@@ -208,9 +210,14 @@ export default function Products() {
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1.5">Απόθεμα</label>
-                  <input value={form.stock_quantity} onChange={e => setForm(f => ({ ...f, stock_quantity: e.target.value }))} type="number" className="input" placeholder="0" />
+                  <input value={form.stock_quantity} onChange={e => setForm(f => ({ ...f, stock_quantity: e.target.value }))} type="number" className="input" placeholder="0" disabled={!form.track_inventory} />
                 </div>
               </div>
+              <label className="flex items-center gap-2 cursor-pointer py-1">
+                <input type="checkbox" checked={form.track_inventory} onChange={e => setForm(f => ({ ...f, track_inventory: e.target.checked }))} className="w-4 h-4 accent-blue-500" />
+                <span className="text-sm text-gray-300">Παρακολούθηση Αποθέματος</span>
+                <span className="text-xs text-gray-500 ml-1">(Track Inventory)</span>
+              </label>
               <div>
                 <label className="block text-sm text-gray-400 mb-1.5">Κατηγορία</label>
                 <select value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))} className="input">
