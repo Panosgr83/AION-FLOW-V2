@@ -513,18 +513,23 @@ async function _statsGetAll(): Promise<StatsCounter[]> {
 }
 
 async function _statsSave(items: StatsCounter[]): Promise<void> {
-  const { data: existing } = await supabase.from('page_contents').select('id').eq('page_key', 'stats_counters').maybeSingle();
+  const { data: existing, error: selErr } = await supabase.from('page_contents').select('id').eq('page_key', 'stats_counters').maybeSingle();
+  if (selErr) throw new Error(`stats_counters save select: ${selErr.message}`);
   if (existing) {
-    const { error } = await supabase.from('page_contents')
+    const { data, error } = await supabase.from('page_contents')
       .update({ metadata: { items }, updated_at: new Date().toISOString() })
       .eq('id', existing.id)
-      .select().single();
+      .select()
+      .maybeSingle();
     if (error) throw new Error(`stats_counters update: ${error.message}`);
+    if (!data) throw new Error('stats_counters update: no row returned (RLS may be blocking)');
   } else {
-    const { error } = await supabase.from('page_contents')
+    const { data, error } = await supabase.from('page_contents')
       .insert({ page_key: 'stats_counters', title: 'Stats Counters', content: '', metadata: { items } })
-      .select().single();
+      .select()
+      .maybeSingle();
     if (error) throw new Error(`stats_counters insert: ${error.message}`);
+    if (!data) throw new Error('stats_counters insert: no row returned (RLS may be blocking)');
   }
 }
 
@@ -611,18 +616,27 @@ async function _featuresGetAll(): Promise<Feature[]> {
 }
 
 async function _featuresSave(items: Feature[]): Promise<void> {
-  const { data: existing } = await supabase.from('page_contents').select('id').eq('page_key', 'features').maybeSingle();
+  console.log('[_featuresSave] called with', items.length, 'items');
+  const { data: existing, error: selErr } = await supabase.from('page_contents').select('id').eq('page_key', 'features').maybeSingle();
+  if (selErr) throw new Error(`features save select: ${selErr.message}`);
+  console.log('[_featuresSave] existing row:', existing?.id ?? 'none');
   if (existing) {
-    const { error } = await supabase.from('page_contents')
+    const { data, error } = await supabase.from('page_contents')
       .update({ metadata: { items }, updated_at: new Date().toISOString() })
       .eq('id', existing.id)
-      .select().single();
+      .select()
+      .maybeSingle();
+    console.log('[_featuresSave] update result:', { data: !!data, error: error?.message });
     if (error) throw new Error(`features update: ${error.message}`);
+    if (!data) throw new Error('features update: no row returned (RLS may be blocking)');
   } else {
-    const { error } = await supabase.from('page_contents')
+    const { data, error } = await supabase.from('page_contents')
       .insert({ page_key: 'features', title: 'Features', content: '', metadata: { items } })
-      .select().single();
+      .select()
+      .maybeSingle();
+    console.log('[_featuresSave] insert result:', { data: !!data, error: error?.message });
     if (error) throw new Error(`features insert: ${error.message}`);
+    if (!data) throw new Error('features insert: no row returned (RLS may be blocking)');
   }
 }
 
