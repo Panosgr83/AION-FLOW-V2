@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, Trash2, X, Plus, Mail, Phone, Award, UserPlus } from 'lucide-react';
+import { Search, Trash2, X, Mail, Phone, Award, UserPlus } from 'lucide-react';
 import { customersHelper } from '../../lib/dataHelpers';
 import { Customer, MembershipLevel } from '../../types/supabase';
 

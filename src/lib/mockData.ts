@@ -1,4 +1,4 @@
-import { Category, Product, Customer, Order, OrderItem, Media } from '../types/supabase';
+import { Category, Product, Customer, Order, Media } from '../types/supabase';
 
 export const mockCategories: Category[] = [
   { id: 'a1000000-0000-0000-0000-000000000001', name: 'Ηλεκτρονικά', slug: 'ilektronika', description: 'Smartphones, laptops, tablets και αξεσουάρ', image_url: '', seo_title: '', seo_description: '', parent_id: null, sort_order: 1, is_active: true, created_by: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z', product_count: 4 },

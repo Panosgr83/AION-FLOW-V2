@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { TrendingUp, TrendingDown, Users, ShoppingCart, DollarSign, BarChart2, Monitor, Smartphone, Tablet } from 'lucide-react';
-import { AreaChart, Area, BarChart, Bar, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { Area, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { analyticsHelper } from '../../lib/dataHelpers';
 
 type AnalyticsData = Awaited<ReturnType<typeof analyticsHelper.getDashboardData>>;
 
-const DEVICE_ICONS = { Mobile: Smartphone, Desktop: Monitor, Tablet: Tablet };
 
 export default function Analytics() {
   const [data, setData] = useState<AnalyticsData | null>(null);
@@ -78,7 +77,7 @@ export default function Analytics() {
               <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" horizontal={false} />
               <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `€${(v/1000).toFixed(0)}k`} />
               <YAxis type="category" dataKey="name" width={140} tick={{ fill: '#9ca3af', fontSize: 10 }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [formatter.format(v), 'Έσοδα']} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v) => [formatter.format(v as number), 'Έσοδα']} />
               <Bar dataKey="revenue" fill="#3b82f6" radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -95,7 +94,7 @@ export default function Analytics() {
                   <Cell key={i} fill={['#3b82f6', '#10b981', '#f59e0b'][i]} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v}%`, 'Ποσοστό']} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`, 'Ποσοστό']} />
             </PieChart>
           </ResponsiveContainer>
           <div className="space-y-2 mt-3">
@@ -147,7 +146,7 @@ export default function Analytics() {
                 <Cell key={i} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v}%`, 'Ποσοστό']} />
+            <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`, 'Ποσοστό']} />
             <Legend formatter={(value) => <span style={{ color: '#9ca3af', fontSize: '12px' }}>{value}</span>} />
           </PieChart>
         </ResponsiveContainer>

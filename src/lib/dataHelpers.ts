@@ -337,10 +337,9 @@ export const analyticsHelper = {
       return mockAnalytics;
     }
 
-    const [ordersRes, customersRes, productsRes] = await Promise.all([
+    const [ordersRes, customersRes] = await Promise.all([
       supabase.from('orders').select('id, total, status, payment_status, created_at, customer_id'),
       supabase.from('customers').select('id'),
-      supabase.from('products').select('id, name, price, category_id, categories(name)'),
     ]);
 
     const orders = ordersRes.data ?? [];

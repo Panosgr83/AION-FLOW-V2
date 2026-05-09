@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { User, Mail, Lock, CheckCircle, Globe, Clock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { profileHelper } from '../../lib/dataHelpers';
-import { supabase, isSupabaseAvailable } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 export default function Profile() {
   const { user, isDemoMode } = useAuth();

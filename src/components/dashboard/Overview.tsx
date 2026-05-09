@@ -92,7 +92,7 @@ export default function Overview() {
               <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
               <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `€${v}`} />
-              <Tooltip contentStyle={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', color: '#f3f4f6', fontSize: '12px' }} formatter={(v: number) => [formatter.format(v), 'Έσοδα']} />
+              <Tooltip contentStyle={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', color: '#f3f4f6', fontSize: '12px' }} formatter={(v) => [formatter.format(v as number), 'Έσοδα']} />
               <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} fill="url(#revenueGrad)" />
             </AreaChart>
           </ResponsiveContainer>
@@ -107,7 +107,7 @@ export default function Overview() {
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', color: '#f3f4f6', fontSize: '12px' }} formatter={(v: number) => [`${v}%`, 'Ποσοστό']} />
+              <Tooltip contentStyle={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', color: '#f3f4f6', fontSize: '12px' }} formatter={(v) => [`${v}%`, 'Ποσοστό']} />
             </PieChart>
           </ResponsiveContainer>
           <div className="space-y-2 mt-2">
