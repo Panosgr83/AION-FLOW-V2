@@ -1,6 +1,6 @@
 import { supabase, isSupabaseAvailable } from './supabase';
-import { mockCategories, mockProducts, mockCustomers, mockOrders, mockMedia, mockAnalytics } from './mockData';
-import { Category, Product, Customer, Order, Media } from '../types/supabase';
+import { mockCategories, mockProducts, mockCustomers, mockOrders, mockMedia, mockAnalytics, mockSlides } from './mockData';
+import { Category, Product, Customer, Order, Media, Slide } from '../types/supabase';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -386,5 +386,76 @@ export const analyticsHelper = {
       trafficSources: mockAnalytics.trafficSources,
       deviceBreakdown: mockAnalytics.deviceBreakdown,
     };
+  },
+};
+
+export const slidesHelper = {
+  async getActive(): Promise<Slide[]> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      return mockSlides.filter(s => s.is_active).sort((a, b) => a.order_position - b.order_position);
+    }
+    const { data, error } = await supabase.from('slides').select('*').eq('is_active', true).order('order_position');
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async getAll(): Promise<Slide[]> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      return [...mockSlides].sort((a, b) => a.order_position - b.order_position);
+    }
+    const { data, error } = await supabase.from('slides').select('*').order('order_position');
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async create(slide: Partial<Slide>): Promise<Slide> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      const newSlide: Slide = { ...slide as Slide, id: crypto.randomUUID(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      mockSlides.push(newSlide);
+      return newSlide;
+    }
+    const { data, error } = await supabase.from('slides').insert(slide).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async update(id: string, updates: Partial<Slide>): Promise<Slide> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      const idx = mockSlides.findIndex(s => s.id === id);
+      if (idx !== -1) mockSlides[idx] = { ...mockSlides[idx], ...updates, updated_at: new Date().toISOString() };
+      return mockSlides[idx];
+    }
+    const { data, error } = await supabase.from('slides').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async delete(id: string): Promise<void> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      const idx = mockSlides.findIndex(s => s.id === id);
+      if (idx !== -1) mockSlides.splice(idx, 1);
+      return;
+    }
+    const { error } = await supabase.from('slides').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  async updateOrder(updates: { id: string; order_position: number }[]): Promise<void> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      for (const u of updates) {
+        const idx = mockSlides.findIndex(s => s.id === u.id);
+        if (idx !== -1) mockSlides[idx].order_position = u.order_position;
+      }
+      return;
+    }
+    for (const u of updates) {
+      await supabase.from('slides').update({ order_position: u.order_position, updated_at: new Date().toISOString() }).eq('id', u.id);
+    }
   },
 };

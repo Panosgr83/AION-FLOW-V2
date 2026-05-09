@@ -8,6 +8,7 @@ import Orders from '../components/dashboard/Orders';
 import Customers from '../components/dashboard/Customers';
 import Analytics from '../components/dashboard/Analytics';
 import MediaLibrary from '../components/dashboard/MediaLibrary';
+import HeroSlider from '../components/dashboard/HeroSlider';
 import Profile from '../components/dashboard/Profile';
 import DashboardSettings from '../components/dashboard/DashboardSettings';
 
@@ -27,6 +28,7 @@ export default function Dashboard() {
             <Route path="customers" element={<Customers />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="media" element={<MediaLibrary />} />
+            <Route path="slider" element={<HeroSlider />} />
             <Route path="profile" element={<Profile />} />
             <Route path="settings" element={<DashboardSettings />} />
           </Routes>

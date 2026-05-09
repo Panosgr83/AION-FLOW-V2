@@ -144,6 +144,22 @@ export interface Media {
   updated_at: string;
 }
 
+export interface Slide {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  description: string;
+  image_url: string;
+  cta1_text: string | null;
+  cta1_link: string | null;
+  cta2_text: string | null;
+  cta2_link: string | null;
+  order_position: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Setting {
   id: string;
   key: string;

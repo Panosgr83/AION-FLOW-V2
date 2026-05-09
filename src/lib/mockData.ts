@@ -1,4 +1,4 @@
-import { Category, Product, Customer, Order, Media } from '../types/supabase';
+import { Category, Product, Customer, Order, Media, Slide } from '../types/supabase';
 
 export const mockCategories: Category[] = [
   { id: 'a1000000-0000-0000-0000-000000000001', name: 'Ηλεκτρονικά', slug: 'ilektronika', description: 'Smartphones, laptops, tablets και αξεσουάρ', image_url: '', seo_title: '', seo_description: '', parent_id: null, sort_order: 1, is_active: true, created_by: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z', product_count: 4 },
@@ -97,3 +97,9 @@ export const mockAnalytics = {
     { device: 'Tablet', percentage: 7 },
   ],
 };
+
+export const mockSlides: Slide[] = [
+  { id: 's1000000-0000-0000-0000-000000000001', title: 'Φρέσκο Ψωμί Κάθε Μέρα', subtitle: 'Από το 1985', description: 'Παραδοσιακές συνταγές με φρέσκα υλικά, ψημένα με αγάπη κάθε πρωί.', image_url: 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?w=1920', cta1_text: 'Δείτε τα Προϊόντα', cta1_link: '/products', cta2_text: 'Επικοινωνία', cta2_link: '/contact', order_position: 1, is_active: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 's1000000-0000-0000-0000-000000000002', title: 'Αρτοποιήματα & Γλυκά', subtitle: 'Χειροποίητα με μεράκι', description: 'Κρουασάν, τσουρέκια, κέικ και πολλά ακόμα — φτιαγμένα καθημερινά.', image_url: 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?w=1920', cta1_text: 'Ανακαλύψτε', cta1_link: '/menu', cta2_text: null, cta2_link: null, order_position: 2, is_active: true, created_at: '2024-01-02T00:00:00Z', updated_at: '2024-01-02T00:00:00Z' },
+  { id: 's1000000-0000-0000-0000-000000000003', title: 'Παραγγείλτε Online', subtitle: 'Παράδοση στο χώρο σας', description: 'Παραγγείλτε εύκολα και γρήγορα τα αγαπημένα σας προϊόντα.', image_url: 'https://images.pexels.com/photos/1070946/pexels-photo-1070946.jpeg?w=1920', cta1_text: 'Παραγγελία', cta1_link: '/order', cta2_text: 'Τιμοκατάλογος', cta2_link: '/pricing', order_position: 3, is_active: false, created_at: '2024-01-03T00:00:00Z', updated_at: '2024-01-03T00:00:00Z' },
+];
