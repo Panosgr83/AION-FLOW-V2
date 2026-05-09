@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Search, Trash2, Image as ImageIcon, Grid2x2 as Grid, List, CheckSquare, Square } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Search, Trash2, Grid2x2 as Grid, List, CheckSquare, Square, Upload, X, Loader } from 'lucide-react';
 import { mediaHelper } from '../../lib/dataHelpers';
 import { Media } from '../../types/supabase';
 
@@ -16,6 +16,9 @@ export default function MediaLibrary() {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [preview, setPreview] = useState<Media | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     mediaHelper.getAll().then(m => { setMedia(m); setLoading(false); });
@@ -39,6 +42,22 @@ export default function MediaLibrary() {
     setSelected(new Set());
   };
 
+  const handleUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    for (const file of Array.from(files)) {
+      const uploaded = await mediaHelper.upload(file);
+      setMedia(prev => [uploaded, ...prev]);
+    }
+    setUploading(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    handleUpload(e.dataTransfer.files);
+  };
+
   if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" /></div>;
 
   return (
@@ -54,6 +73,11 @@ export default function MediaLibrary() {
               <Trash2 size={14} /> Διαγραφή ({selected.size})
             </button>
           )}
+          <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className="btn-primary disabled:opacity-50">
+            {uploading ? <Loader size={14} className="animate-spin" /> : <Upload size={14} />}
+            {uploading ? 'Ανέβασμα...' : 'Ανέβασμα'}
+          </button>
+          <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden" onChange={e => handleUpload(e.target.files)} />
           <button onClick={() => setView('grid')} className={`p-2.5 rounded-xl transition-colors ${view === 'grid' ? 'bg-blue-500/20 text-blue-400' : 'text-gray-500 hover:bg-gray-800'}`}>
             <Grid size={16} />
           </button>
@@ -61,6 +85,18 @@ export default function MediaLibrary() {
             <List size={16} />
           </button>
         </div>
+      </div>
+
+      {/* Drop Zone */}
+      <div
+        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+        className={`card p-6 border-2 border-dashed text-center transition-colors ${dragOver ? 'border-blue-500 bg-blue-500/5' : 'border-gray-700'}`}
+      >
+        <Upload size={24} className={`mx-auto mb-2 ${dragOver ? 'text-blue-400' : 'text-gray-600'}`} />
+        <p className="text-sm text-gray-400">Σύρετε αρχεία εδώ ή κάντε κλικ στο κουμπί "Ανέβασμα"</p>
+        <p className="text-xs text-gray-600 mt-1">Υποστηριζόμενοι τύποι: JPG, PNG, GIF, WebP</p>
       </div>
 
       <div className="card p-4">
@@ -129,7 +165,7 @@ export default function MediaLibrary() {
                   </td>
                   <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs text-gray-500">{item.folder || '—'}</span></td>
                   <td className="px-4 py-3 hidden sm:table-cell"><span className="text-xs text-gray-400">{formatSize(item.size)}</span></td>
-                  <td className="px-4 py-3 hidden lg:table-cell"><span className="text-xs text-gray-400">{item.width && item.height ? `${item.width}×${item.height}` : '—'}</span></td>
+                  <td className="px-4 py-3 hidden lg:table-cell"><span className="text-xs text-gray-400">{item.width && item.height ? `${item.width}x${item.height}` : '—'}</span></td>
                   <td className="px-4 py-3">
                     <button onClick={() => mediaHelper.delete(item.id).then(() => setMedia(m => m.filter(x => x.id !== item.id)))} className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
                       <Trash2 size={13} />
@@ -146,6 +182,9 @@ export default function MediaLibrary() {
       {preview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setPreview(null)}>
           <div className="card max-w-2xl w-full p-4" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-end mb-2">
+              <button onClick={() => setPreview(null)} className="text-gray-500 hover:text-gray-300"><X size={18} /></button>
+            </div>
             <img src={preview.url} alt={preview.alt_text || preview.name} className="w-full rounded-xl object-contain max-h-96" />
             <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
               <div><div className="text-xs text-gray-500">Όνομα</div><div className="font-medium">{preview.name}</div></div>
@@ -154,7 +193,7 @@ export default function MediaLibrary() {
             </div>
             <div className="mt-3 p-2 bg-gray-800 rounded-lg">
               <div className="text-xs text-gray-500 mb-1">URL</div>
-              <div className="text-xs font-mono text-gray-300 truncate">{preview.url}</div>
+              <div className="text-xs font-mono text-gray-300 truncate select-all">{preview.url}</div>
             </div>
           </div>
         </div>
