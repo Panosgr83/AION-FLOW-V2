@@ -178,33 +178,44 @@ function StatsTab() {
   const [form, setForm] = useState({ label: '', value: '', suffix: '', is_active: true });
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    statsCountersHelper.getAll().then(data => { setStats(data); setLoading(false); });
+    statsCountersHelper.getAll()
+      .then(data => { setStats(data); setLoading(false); })
+      .catch(err => { console.error('[StatsTab] getAll error:', err); setLoading(false); });
   }, []);
 
-  const openAdd = () => { setEditing(null); setForm({ label: '', value: '', suffix: '', is_active: true }); setShowModal(true); };
+  const openAdd = () => { setEditing(null); setForm({ label: '', value: '', suffix: '', is_active: true }); setSaveError(null); setShowModal(true); };
   const openEdit = (s: StatsCounter) => {
     setEditing(s);
     setForm({ label: s.label, value: s.value, suffix: s.suffix ?? '', is_active: s.is_active });
+    setSaveError(null);
     setShowModal(true);
   };
 
   const handleSave = async () => {
     setSaving(true);
+    setSaveError(null);
+    console.log('[StatsTab] handleSave called, editing:', !!editing);
     try {
       const payload = { label: form.label, value: form.value, suffix: form.suffix || null, is_active: form.is_active };
+      console.log('[StatsTab] payload:', JSON.stringify(payload));
       if (editing) {
         const updated = await statsCountersHelper.update(editing.id, payload);
+        console.log('[StatsTab] update success:', updated);
         setStats(prev => prev.map(s => s.id === editing.id ? updated : s));
       } else {
         const maxPos = stats.reduce((max, s) => Math.max(max, s.order_position), 0);
         const created = await statsCountersHelper.create({ ...payload, order_position: maxPos + 1 });
+        console.log('[StatsTab] create success:', created);
         setStats(prev => [...prev, created]);
       }
       setShowModal(false);
     } catch (err) {
-      alert('Σφάλμα αποθήκευσης: ' + (err instanceof Error ? err.message : 'Άγνωστο σφάλμα'));
+      const msg = err instanceof Error ? err.message : 'Άγνωστο σφάλμα';
+      console.error('[StatsTab] save error:', err);
+      setSaveError(msg);
     } finally {
       setSaving(false);
     }
@@ -319,6 +330,11 @@ function StatsTab() {
                 </div>
               )}
             </div>
+            {saveError && (
+              <div className="mx-5 mb-0 p-3 bg-red-900/40 border border-red-700/50 rounded-xl text-red-300 text-sm">
+                <strong>Σφάλμα:</strong> {saveError}
+              </div>
+            )}
             <div className="flex justify-end gap-3 p-5 border-t border-gray-800">
               <button onClick={() => setShowModal(false)} className="btn-secondary">Ακύρωση</button>
               <button onClick={handleSave} disabled={saving || !form.label || !form.value} className="btn-primary disabled:opacity-50">
@@ -354,33 +370,44 @@ function FeaturesTab() {
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showIconPicker, setShowIconPicker] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    featuresHelper.getAll().then(data => { setFeatures(data); setLoading(false); });
+    featuresHelper.getAll()
+      .then(data => { setFeatures(data); setLoading(false); })
+      .catch(err => { console.error('[FeaturesTab] getAll error:', err); setLoading(false); });
   }, []);
 
-  const openAdd = () => { setEditing(null); setForm({ icon: 'Star', title: '', description: '', is_active: true }); setShowModal(true); };
+  const openAdd = () => { setEditing(null); setForm({ icon: 'Star', title: '', description: '', is_active: true }); setSaveError(null); setShowModal(true); };
   const openEdit = (f: Feature) => {
     setEditing(f);
     setForm({ icon: f.icon, title: f.title, description: f.description, is_active: f.is_active });
+    setSaveError(null);
     setShowModal(true);
   };
 
   const handleSave = async () => {
     setSaving(true);
+    setSaveError(null);
+    console.log('[FeaturesTab] handleSave called, editing:', !!editing);
     try {
       const payload = { icon: form.icon, title: form.title, description: form.description, is_active: form.is_active };
+      console.log('[FeaturesTab] payload:', JSON.stringify(payload));
       if (editing) {
         const updated = await featuresHelper.update(editing.id, payload);
+        console.log('[FeaturesTab] update success:', updated);
         setFeatures(prev => prev.map(f => f.id === editing.id ? updated : f));
       } else {
         const maxPos = features.reduce((max, f) => Math.max(max, f.order_position), 0);
         const created = await featuresHelper.create({ ...payload, order_position: maxPos + 1 });
+        console.log('[FeaturesTab] create success:', created);
         setFeatures(prev => [...prev, created]);
       }
       setShowModal(false);
     } catch (err) {
-      alert('Σφάλμα αποθήκευσης: ' + (err instanceof Error ? err.message : 'Άγνωστο σφάλμα'));
+      const msg = err instanceof Error ? err.message : 'Άγνωστο σφάλμα';
+      console.error('[FeaturesTab] save error:', err);
+      setSaveError(msg);
     } finally {
       setSaving(false);
     }
@@ -509,6 +536,11 @@ function FeaturesTab() {
                 <span className="text-sm text-gray-300">{form.is_active ? 'Ενεργό' : 'Ανενεργό'}</span>
               </div>
             </div>
+            {saveError && (
+              <div className="mx-5 mb-0 p-3 bg-red-900/40 border border-red-700/50 rounded-xl text-red-300 text-sm">
+                <strong>Σφάλμα:</strong> {saveError}
+              </div>
+            )}
             <div className="flex justify-end gap-3 p-5 border-t border-gray-800">
               <button onClick={() => setShowModal(false)} className="btn-secondary">Ακύρωση</button>
               <button onClick={handleSave} disabled={saving || !form.title} className="btn-primary disabled:opacity-50">

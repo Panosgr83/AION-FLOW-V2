@@ -507,18 +507,26 @@ export const statsCountersHelper = {
       await delay(300);
       return [...mockStatsCounters].sort((a, b) => a.order_position - b.order_position);
     }
-    const { data, error } = await supabase.from('page_contents').select('metadata').eq('page_key', 'stats_counters').maybeSingle();
-    if (error) throw error;
+    const { data, error } = await supabase.from('page_contents').select('*').eq('page_key', 'stats_counters').maybeSingle();
+    if (error) throw new Error(`stats_counters getAll: ${error.message}`);
     const items = (data?.metadata as { items?: StatsCounter[] } | null)?.items ?? [];
     return items.sort((a, b) => a.order_position - b.order_position);
   },
 
   async _save(items: StatsCounter[]): Promise<void> {
-    const { error } = await supabase.from('page_contents').upsert(
-      { page_key: 'stats_counters', title: 'Stats Counters', content: '', metadata: { items }, updated_at: new Date().toISOString() },
-      { onConflict: 'page_key' }
-    );
-    if (error) throw new Error(`stats_counters save: ${error.message}`);
+    const { data: existing } = await supabase.from('page_contents').select('id').eq('page_key', 'stats_counters').maybeSingle();
+    if (existing) {
+      const { error } = await supabase.from('page_contents')
+        .update({ metadata: { items }, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+        .select().single();
+      if (error) throw new Error(`stats_counters update: ${error.message}`);
+    } else {
+      const { error } = await supabase.from('page_contents')
+        .insert({ page_key: 'stats_counters', title: 'Stats Counters', content: '', metadata: { items } })
+        .select().single();
+      if (error) throw new Error(`stats_counters insert: ${error.message}`);
+    }
   },
 
   async create(counter: Partial<StatsCounter>): Promise<StatsCounter> {
@@ -595,18 +603,26 @@ export const featuresHelper = {
       await delay(300);
       return [...mockFeatures].sort((a, b) => a.order_position - b.order_position);
     }
-    const { data, error } = await supabase.from('page_contents').select('metadata').eq('page_key', 'features').maybeSingle();
-    if (error) throw error;
+    const { data, error } = await supabase.from('page_contents').select('*').eq('page_key', 'features').maybeSingle();
+    if (error) throw new Error(`features getAll: ${error.message}`);
     const items = (data?.metadata as { items?: Feature[] } | null)?.items ?? [];
     return items.sort((a, b) => a.order_position - b.order_position);
   },
 
   async _save(items: Feature[]): Promise<void> {
-    const { error } = await supabase.from('page_contents').upsert(
-      { page_key: 'features', title: 'Features', content: '', metadata: { items }, updated_at: new Date().toISOString() },
-      { onConflict: 'page_key' }
-    );
-    if (error) throw new Error(`features save: ${error.message}`);
+    const { data: existing } = await supabase.from('page_contents').select('id').eq('page_key', 'features').maybeSingle();
+    if (existing) {
+      const { error } = await supabase.from('page_contents')
+        .update({ metadata: { items }, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+        .select().single();
+      if (error) throw new Error(`features update: ${error.message}`);
+    } else {
+      const { error } = await supabase.from('page_contents')
+        .insert({ page_key: 'features', title: 'Features', content: '', metadata: { items } })
+        .select().single();
+      if (error) throw new Error(`features insert: ${error.message}`);
+    }
   },
 
   async create(feature: Partial<Feature>): Promise<Feature> {
