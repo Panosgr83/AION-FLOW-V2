@@ -417,10 +417,10 @@ export const slidesHelper = {
       mockSlides.push(newSlide);
       return newSlide;
     }
-    const { data, error } = await supabase.from('slides').insert(slide).select().maybeSingle();
-    if (error) throw error;
-    if (!data) throw new Error('Insert succeeded but no data returned');
-    return data;
+    const res = await supabase.from('slides').insert(slide).select();
+    if (res.error) throw new Error(`slides insert: ${res.error.message}`);
+    if (!res.data || res.data.length === 0) throw new Error('slides insert: no rows returned');
+    return res.data[0];
   },
 
   async update(id: string, updates: Partial<Slide>): Promise<Slide> {
@@ -430,10 +430,10 @@ export const slidesHelper = {
       if (idx !== -1) mockSlides[idx] = { ...mockSlides[idx], ...updates, updated_at: new Date().toISOString() };
       return mockSlides[idx];
     }
-    const { data, error } = await supabase.from('slides').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().maybeSingle();
-    if (error) throw error;
-    if (!data) throw new Error('Update failed - no data returned');
-    return data;
+    const res = await supabase.from('slides').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select();
+    if (res.error) throw new Error(`slides update: ${res.error.message}`);
+    if (!res.data || res.data.length === 0) throw new Error('slides update: no rows returned');
+    return res.data[0];
   },
 
   async delete(id: string): Promise<void> {
@@ -519,10 +519,10 @@ export const statsCountersHelper = {
       mockStatsCounters.push(newCounter);
       return newCounter;
     }
-    const { data, error } = await supabase.from('stats_counters').insert(counter).select().maybeSingle();
-    if (error) throw error;
-    if (!data) throw new Error('Insert succeeded but no data returned');
-    return data;
+    const res = await supabase.from('stats_counters').insert(counter).select();
+    if (res.error) throw new Error(`stats_counters insert: ${res.error.message}`);
+    if (!res.data || res.data.length === 0) throw new Error('stats_counters insert: no rows returned');
+    return res.data[0];
   },
 
   async update(id: string, updates: Partial<StatsCounter>): Promise<StatsCounter> {
@@ -532,10 +532,10 @@ export const statsCountersHelper = {
       if (idx !== -1) mockStatsCounters[idx] = { ...mockStatsCounters[idx], ...updates, updated_at: new Date().toISOString() };
       return mockStatsCounters[idx];
     }
-    const { data, error } = await supabase.from('stats_counters').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().maybeSingle();
-    if (error) throw error;
-    if (!data) throw new Error('Update failed - no data returned');
-    return data;
+    const res = await supabase.from('stats_counters').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select();
+    if (res.error) throw new Error(`stats_counters update: ${res.error.message}`);
+    if (!res.data || res.data.length === 0) throw new Error('stats_counters update: no rows returned');
+    return res.data[0];
   },
 
   async delete(id: string): Promise<void> {
@@ -582,10 +582,10 @@ export const featuresHelper = {
       mockFeatures.push(newFeature);
       return newFeature;
     }
-    const { data, error } = await supabase.from('features').insert(feature).select().maybeSingle();
-    if (error) throw error;
-    if (!data) throw new Error('Insert succeeded but no data returned');
-    return data;
+    const res = await supabase.from('features').insert(feature).select();
+    if (res.error) throw new Error(`features insert: ${res.error.message}`);
+    if (!res.data || res.data.length === 0) throw new Error('features insert: no rows returned');
+    return res.data[0];
   },
 
   async update(id: string, updates: Partial<Feature>): Promise<Feature> {
@@ -595,10 +595,10 @@ export const featuresHelper = {
       if (idx !== -1) mockFeatures[idx] = { ...mockFeatures[idx], ...updates, updated_at: new Date().toISOString() };
       return mockFeatures[idx];
     }
-    const { data, error } = await supabase.from('features').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().maybeSingle();
-    if (error) throw error;
-    if (!data) throw new Error('Update failed - no data returned');
-    return data;
+    const res = await supabase.from('features').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select();
+    if (res.error) throw new Error(`features update: ${res.error.message}`);
+    if (!res.data || res.data.length === 0) throw new Error('features update: no rows returned');
+    return res.data[0];
   },
 
   async delete(id: string): Promise<void> {
