@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FileText, Hash, Sparkles, Plus, Trash2, X, ChevronUp, ChevronDown, GripVertical, Eye, EyeOff, Save, Check, Heart, Star, Award, Clock, Coffee, Leaf, Sun, Shield, ThumbsUp, Users, Truck, MapPin, Phone, Gift, Flame, Crown, Target, Zap, Gem, type LucideIcon } from 'lucide-react';
 import { pageContentHelper, statsCountersHelper, featuresHelper } from '../../lib/dataHelpers';
+import { supabase } from '../../lib/supabase';
 import { StatsCounter, Feature } from '../../types/supabase';
 
 type TabId = 'about' | 'stats' | 'features';
@@ -390,20 +391,53 @@ function FeaturesTab() {
     setSaving(true);
     setSaveError(null);
     console.log('[FeaturesTab] handleSave called, editing:', !!editing);
-    const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout: η αποθήκευση δεν ολοκληρώθηκε σε 15 δευτερόλεπτα')), 15000));
     try {
       const payload = { icon: form.icon, title: form.title, description: form.description, is_active: form.is_active };
       console.log('[FeaturesTab] payload:', JSON.stringify(payload));
+
       if (editing) {
-        const updated = await Promise.race([featuresHelper.update(editing.id, payload), timeout]);
-        console.log('[FeaturesTab] update success:', updated);
-        setFeatures(prev => prev.map(f => f.id === editing.id ? updated : f));
+        const updatedItem: Feature = { ...editing, ...payload, updated_at: new Date().toISOString() };
+        const newList = features.map(f => f.id === editing.id ? updatedItem : f);
+        console.log('[FeaturesTab] saving updated list, count:', newList.length);
+        const { data: row } = await supabase.from('page_contents').select('id').eq('page_key', 'features').maybeSingle();
+        console.log('[FeaturesTab] got row id:', row?.id);
+        if (row) {
+          const { error } = await supabase.from('page_contents')
+            .update({ metadata: { items: newList }, updated_at: new Date().toISOString() })
+            .eq('id', row.id);
+          console.log('[FeaturesTab] update done, error:', error?.message ?? 'none');
+          if (error) throw new Error(error.message);
+        }
+        setFeatures(newList);
       } else {
         const maxPos = features.reduce((max, f) => Math.max(max, f.order_position), 0);
-        console.log('[FeaturesTab] calling create...');
-        const created = await Promise.race([featuresHelper.create({ ...payload, order_position: maxPos + 1 }), timeout]);
-        console.log('[FeaturesTab] create success:', created);
-        setFeatures(prev => [...prev, created]);
+        const newItem: Feature = {
+          id: crypto.randomUUID(),
+          icon: form.icon,
+          title: form.title,
+          description: form.description,
+          order_position: maxPos + 1,
+          is_active: form.is_active,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        const newList = [...features, newItem];
+        console.log('[FeaturesTab] saving new list, count:', newList.length);
+        const { data: row } = await supabase.from('page_contents').select('id').eq('page_key', 'features').maybeSingle();
+        console.log('[FeaturesTab] got row id:', row?.id);
+        if (row) {
+          const { error } = await supabase.from('page_contents')
+            .update({ metadata: { items: newList }, updated_at: new Date().toISOString() })
+            .eq('id', row.id);
+          console.log('[FeaturesTab] update done, error:', error?.message ?? 'none');
+          if (error) throw new Error(error.message);
+        } else {
+          const { error } = await supabase.from('page_contents')
+            .insert({ page_key: 'features', title: 'Features', content: '', metadata: { items: newList } });
+          console.log('[FeaturesTab] insert done, error:', error?.message ?? 'none');
+          if (error) throw new Error(error.message);
+        }
+        setFeatures(newList);
       }
       setShowModal(false);
     } catch (err) {
