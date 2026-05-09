@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Zap, LayoutDashboard, Package, Tag, ShoppingCart, Users, BarChart3, Image, Presentation, Settings, User, ChevronLeft, ChevronRight, LogOut, Wifi, WifiOff } from 'lucide-react';
+import { Zap, LayoutDashboard, Package, Tag, ShoppingCart, Users, BarChart3, Image, Presentation, FileText, Settings, User, ChevronLeft, ChevronRight, LogOut, Wifi, WifiOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const navItems = [
@@ -12,6 +12,7 @@ const navItems = [
   { path: '/dashboard/analytics', icon: BarChart3, label: 'Αναλυτικά' },
   { path: '/dashboard/media', icon: Image, label: 'Πολυμέσα' },
   { path: '/dashboard/slider', icon: Presentation, label: 'Hero Slider' },
+  { path: '/dashboard/content', icon: FileText, label: 'Περιεχόμενο' },
 ];
 
 const bottomItems = [

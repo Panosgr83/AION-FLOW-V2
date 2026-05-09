@@ -1,4 +1,4 @@
-import { Category, Product, Customer, Order, Media, Slide } from '../types/supabase';
+import { Category, Product, Customer, Order, Media, Slide, PageContent, StatsCounter, Feature } from '../types/supabase';
 
 export const mockCategories: Category[] = [
   { id: 'a1000000-0000-0000-0000-000000000001', name: 'Ηλεκτρονικά', slug: 'ilektronika', description: 'Smartphones, laptops, tablets και αξεσουάρ', image_url: '', seo_title: '', seo_description: '', parent_id: null, sort_order: 1, is_active: true, created_by: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z', product_count: 4 },
@@ -102,4 +102,23 @@ export const mockSlides: Slide[] = [
   { id: 's1000000-0000-0000-0000-000000000001', title: 'Φρέσκο Ψωμί Κάθε Μέρα', subtitle: 'Από το 1985', description: 'Παραδοσιακές συνταγές με φρέσκα υλικά, ψημένα με αγάπη κάθε πρωί.', image_url: 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?w=1920', cta1_text: 'Δείτε τα Προϊόντα', cta1_link: '/products', cta2_text: 'Επικοινωνία', cta2_link: '/contact', order_position: 1, is_active: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
   { id: 's1000000-0000-0000-0000-000000000002', title: 'Αρτοποιήματα & Γλυκά', subtitle: 'Χειροποίητα με μεράκι', description: 'Κρουασάν, τσουρέκια, κέικ και πολλά ακόμα — φτιαγμένα καθημερινά.', image_url: 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?w=1920', cta1_text: 'Ανακαλύψτε', cta1_link: '/menu', cta2_text: null, cta2_link: null, order_position: 2, is_active: true, created_at: '2024-01-02T00:00:00Z', updated_at: '2024-01-02T00:00:00Z' },
   { id: 's1000000-0000-0000-0000-000000000003', title: 'Παραγγείλτε Online', subtitle: 'Παράδοση στο χώρο σας', description: 'Παραγγείλτε εύκολα και γρήγορα τα αγαπημένα σας προϊόντα.', image_url: 'https://images.pexels.com/photos/1070946/pexels-photo-1070946.jpeg?w=1920', cta1_text: 'Παραγγελία', cta1_link: '/order', cta2_text: 'Τιμοκατάλογος', cta2_link: '/pricing', order_position: 3, is_active: false, created_at: '2024-01-03T00:00:00Z', updated_at: '2024-01-03T00:00:00Z' },
+];
+
+export const mockPageContents: PageContent[] = [
+  { id: 'pc100000-0000-0000-0000-000000000001', page_key: 'about_story', title: 'Η Ιστορία μας', content: '<p>Το Angelus Bakery ξεκίνησε το 1985 ως ένα μικρό οικογενειακό αρτοποιείο στην καρδιά της πόλης. Με πάθος για τη ζαχαροπλαστική και σεβασμό στις παραδοσιακές συνταγές, δημιουργούμε καθημερινά αρτοποιήματα που θυμίζουν σπίτι.</p><p>Σήμερα, τρεις γενιές μετά, συνεχίζουμε με την ίδια αφοσίωση να προσφέρουμε ποιοτικά προϊόντα.</p>', metadata: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'pc100000-0000-0000-0000-000000000002', page_key: 'about_mission', title: 'Η Αποστολή μας', content: '<p>Να προσφέρουμε κάθε μέρα φρέσκα, χειροποίητα αρτοποιήματα με αγνά υλικά, κρατώντας ζωντανή την παράδοση της ελληνικής ζαχαροπλαστικής.</p>', metadata: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+];
+
+export const mockStatsCounters: StatsCounter[] = [
+  { id: 'sc100000-0000-0000-0000-000000000001', label: 'Χρόνια Εμπειρίας', value: '38', suffix: '+', order_position: 1, is_active: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'sc100000-0000-0000-0000-000000000002', label: 'Ευτυχισμένοι Πελάτες', value: '10,000', suffix: '+', order_position: 2, is_active: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'sc100000-0000-0000-0000-000000000003', label: 'Προϊόντα', value: '50', suffix: '+', order_position: 3, is_active: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'sc100000-0000-0000-0000-000000000004', label: 'Βραβεία Ποιότητας', value: '12', suffix: null, order_position: 4, is_active: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+];
+
+export const mockFeatures: Feature[] = [
+  { id: 'ft100000-0000-0000-0000-000000000001', icon: 'Heart', title: 'Φτιαγμένα με Αγάπη', description: 'Κάθε προϊόν μας δημιουργείται με προσοχή και μεράκι, ακολουθώντας τις παραδοσιακές μας συνταγές.', order_position: 1, is_active: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'ft100000-0000-0000-0000-000000000002', icon: 'Wheat', title: 'Αγνά Υλικά', description: 'Χρησιμοποιούμε μόνο φρέσκα, τοπικά υλικά χωρίς συντηρητικά ή τεχνητά πρόσθετα.', order_position: 2, is_active: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'ft100000-0000-0000-0000-000000000003', icon: 'Clock', title: 'Φρέσκα Κάθε Μέρα', description: 'Τα αρτοποιήματά μας ψήνονται κάθε πρωί, εξασφαλίζοντας μοναδική φρεσκάδα.', order_position: 3, is_active: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: 'ft100000-0000-0000-0000-000000000004', icon: 'Award', title: 'Βραβευμένη Ποιότητα', description: 'Έχουμε τιμηθεί με πολυάριθμα βραβεία για την ποιότητα και τη γεύση των προϊόντων μας.', order_position: 4, is_active: true, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
 ];

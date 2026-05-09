@@ -160,6 +160,38 @@ export interface Slide {
   updated_at: string;
 }
 
+export interface PageContent {
+  id: string;
+  page_key: string;
+  title: string | null;
+  content: string;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StatsCounter {
+  id: string;
+  label: string;
+  value: string;
+  suffix: string | null;
+  order_position: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Feature {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  order_position: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Setting {
   id: string;
   key: string;

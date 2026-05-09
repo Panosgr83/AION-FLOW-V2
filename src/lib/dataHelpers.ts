@@ -1,6 +1,6 @@
 import { supabase, isSupabaseAvailable } from './supabase';
-import { mockCategories, mockProducts, mockCustomers, mockOrders, mockMedia, mockAnalytics, mockSlides } from './mockData';
-import { Category, Product, Customer, Order, Media, Slide } from '../types/supabase';
+import { mockCategories, mockProducts, mockCustomers, mockOrders, mockMedia, mockAnalytics, mockSlides, mockPageContents, mockStatsCounters, mockFeatures } from './mockData';
+import { Category, Product, Customer, Order, Media, Slide, PageContent, StatsCounter, Feature } from '../types/supabase';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -456,6 +456,167 @@ export const slidesHelper = {
     }
     for (const u of updates) {
       await supabase.from('slides').update({ order_position: u.order_position, updated_at: new Date().toISOString() }).eq('id', u.id);
+    }
+  },
+};
+
+export const pageContentHelper = {
+  async get(pageKey: string): Promise<PageContent | null> {
+    if (!isSupabaseAvailable()) {
+      await delay(200);
+      return mockPageContents.find(p => p.page_key === pageKey) ?? null;
+    }
+    const { data, error } = await supabase.from('page_contents').select('*').eq('page_key', pageKey).maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  async getAll(): Promise<PageContent[]> {
+    if (!isSupabaseAvailable()) {
+      await delay(200);
+      return mockPageContents;
+    }
+    const { data, error } = await supabase.from('page_contents').select('*').order('page_key');
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async upsert(pageKey: string, updates: { title?: string | null; content?: string; metadata?: Record<string, unknown> | null }): Promise<PageContent> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      const idx = mockPageContents.findIndex(p => p.page_key === pageKey);
+      if (idx !== -1) {
+        mockPageContents[idx] = { ...mockPageContents[idx], ...updates, updated_at: new Date().toISOString() };
+        return mockPageContents[idx];
+      }
+      const newContent: PageContent = { id: crypto.randomUUID(), page_key: pageKey, title: updates.title ?? null, content: updates.content ?? '', metadata: updates.metadata ?? null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      mockPageContents.push(newContent);
+      return newContent;
+    }
+    const { data, error } = await supabase.from('page_contents').upsert({ page_key: pageKey, ...updates, updated_at: new Date().toISOString() }, { onConflict: 'page_key' }).select().single();
+    if (error) throw error;
+    return data;
+  },
+};
+
+export const statsCountersHelper = {
+  async getAll(): Promise<StatsCounter[]> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      return [...mockStatsCounters].sort((a, b) => a.order_position - b.order_position);
+    }
+    const { data, error } = await supabase.from('stats_counters').select('*').order('order_position');
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async create(counter: Partial<StatsCounter>): Promise<StatsCounter> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      const newCounter: StatsCounter = { ...counter as StatsCounter, id: crypto.randomUUID(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      mockStatsCounters.push(newCounter);
+      return newCounter;
+    }
+    const { data, error } = await supabase.from('stats_counters').insert(counter).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async update(id: string, updates: Partial<StatsCounter>): Promise<StatsCounter> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      const idx = mockStatsCounters.findIndex(s => s.id === id);
+      if (idx !== -1) mockStatsCounters[idx] = { ...mockStatsCounters[idx], ...updates, updated_at: new Date().toISOString() };
+      return mockStatsCounters[idx];
+    }
+    const { data, error } = await supabase.from('stats_counters').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async delete(id: string): Promise<void> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      const idx = mockStatsCounters.findIndex(s => s.id === id);
+      if (idx !== -1) mockStatsCounters.splice(idx, 1);
+      return;
+    }
+    const { error } = await supabase.from('stats_counters').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  async updateOrder(updates: { id: string; order_position: number }[]): Promise<void> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      for (const u of updates) {
+        const idx = mockStatsCounters.findIndex(s => s.id === u.id);
+        if (idx !== -1) mockStatsCounters[idx].order_position = u.order_position;
+      }
+      return;
+    }
+    for (const u of updates) {
+      await supabase.from('stats_counters').update({ order_position: u.order_position, updated_at: new Date().toISOString() }).eq('id', u.id);
+    }
+  },
+};
+
+export const featuresHelper = {
+  async getAll(): Promise<Feature[]> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      return [...mockFeatures].sort((a, b) => a.order_position - b.order_position);
+    }
+    const { data, error } = await supabase.from('features').select('*').order('order_position');
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async create(feature: Partial<Feature>): Promise<Feature> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      const newFeature: Feature = { ...feature as Feature, id: crypto.randomUUID(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      mockFeatures.push(newFeature);
+      return newFeature;
+    }
+    const { data, error } = await supabase.from('features').insert(feature).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async update(id: string, updates: Partial<Feature>): Promise<Feature> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      const idx = mockFeatures.findIndex(f => f.id === id);
+      if (idx !== -1) mockFeatures[idx] = { ...mockFeatures[idx], ...updates, updated_at: new Date().toISOString() };
+      return mockFeatures[idx];
+    }
+    const { data, error } = await supabase.from('features').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async delete(id: string): Promise<void> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      const idx = mockFeatures.findIndex(f => f.id === id);
+      if (idx !== -1) mockFeatures.splice(idx, 1);
+      return;
+    }
+    const { error } = await supabase.from('features').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  async updateOrder(updates: { id: string; order_position: number }[]): Promise<void> {
+    if (!isSupabaseAvailable()) {
+      await delay(300);
+      for (const u of updates) {
+        const idx = mockFeatures.findIndex(f => f.id === u.id);
+        if (idx !== -1) mockFeatures[idx].order_position = u.order_position;
+      }
+      return;
+    }
+    for (const u of updates) {
+      await supabase.from('features').update({ order_position: u.order_position, updated_at: new Date().toISOString() }).eq('id', u.id);
     }
   },
 };
