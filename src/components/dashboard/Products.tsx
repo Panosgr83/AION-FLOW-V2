@@ -213,11 +213,21 @@ export default function Products() {
                   <input value={form.stock_quantity} onChange={e => setForm(f => ({ ...f, stock_quantity: e.target.value }))} type="number" className="input" placeholder="0" disabled={!form.track_inventory} />
                 </div>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer py-1">
-                <input type="checkbox" checked={form.track_inventory} onChange={e => setForm(f => ({ ...f, track_inventory: e.target.checked }))} className="w-4 h-4 accent-blue-500" />
-                <span className="text-sm text-gray-300">Παρακολούθηση Αποθέματος</span>
-                <span className="text-xs text-gray-500 ml-1">(Track Inventory)</span>
-              </label>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700/50">
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.track_inventory}
+                    onChange={e => setForm(f => ({ ...f, track_inventory: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                </label>
+                <div>
+                  <span className="text-sm font-medium text-gray-200">Track Inventory</span>
+                  <p className="text-xs text-gray-500">Παρακολούθηση αποθέματος για αυτό το προϊόν</p>
+                </div>
+              </div>
               <div>
                 <label className="block text-sm text-gray-400 mb-1.5">Κατηγορία</label>
                 <select value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))} className="input">
