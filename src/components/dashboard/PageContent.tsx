@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FileText, Hash, Sparkles, Plus, Trash2, X, ChevronUp, ChevronDown, GripVertical, Eye, EyeOff, Save, Check, Heart, Star, Award, Clock, Coffee, Leaf, Sun, Shield, ThumbsUp, Users, Truck, MapPin, Phone, Gift, Flame, Crown, Target, Zap, Gem, type LucideIcon } from 'lucide-react';
 import { pageContentHelper, statsCountersHelper, featuresHelper } from '../../lib/dataHelpers';
-import { supabase } from '../../lib/supabase';
 import { StatsCounter, Feature } from '../../types/supabase';
 
 type TabId = 'about' | 'stats' | 'features';
@@ -390,59 +389,19 @@ function FeaturesTab() {
   const handleSave = async () => {
     setSaving(true);
     setSaveError(null);
-    console.log('[FeaturesTab] handleSave called, editing:', !!editing);
     try {
       const payload = { icon: form.icon, title: form.title, description: form.description, is_active: form.is_active };
-      console.log('[FeaturesTab] payload:', JSON.stringify(payload));
-
       if (editing) {
-        const updatedItem: Feature = { ...editing, ...payload, updated_at: new Date().toISOString() };
-        const newList = features.map(f => f.id === editing.id ? updatedItem : f);
-        console.log('[FeaturesTab] saving updated list, count:', newList.length);
-        const { data: row } = await supabase.from('page_contents').select('id').eq('page_key', 'features').maybeSingle();
-        console.log('[FeaturesTab] got row id:', row?.id);
-        if (row) {
-          const { error } = await supabase.from('page_contents')
-            .update({ metadata: { items: newList }, updated_at: new Date().toISOString() })
-            .eq('id', row.id);
-          console.log('[FeaturesTab] update done, error:', error?.message ?? 'none');
-          if (error) throw new Error(error.message);
-        }
-        setFeatures(newList);
+        const updated = await featuresHelper.update(editing.id, payload);
+        setFeatures(prev => prev.map(f => f.id === editing.id ? updated : f));
       } else {
         const maxPos = features.reduce((max, f) => Math.max(max, f.order_position), 0);
-        const newItem: Feature = {
-          id: crypto.randomUUID(),
-          icon: form.icon,
-          title: form.title,
-          description: form.description,
-          order_position: maxPos + 1,
-          is_active: form.is_active,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        const newList = [...features, newItem];
-        console.log('[FeaturesTab] saving new list, count:', newList.length);
-        const { data: row } = await supabase.from('page_contents').select('id').eq('page_key', 'features').maybeSingle();
-        console.log('[FeaturesTab] got row id:', row?.id);
-        if (row) {
-          const { error } = await supabase.from('page_contents')
-            .update({ metadata: { items: newList }, updated_at: new Date().toISOString() })
-            .eq('id', row.id);
-          console.log('[FeaturesTab] update done, error:', error?.message ?? 'none');
-          if (error) throw new Error(error.message);
-        } else {
-          const { error } = await supabase.from('page_contents')
-            .insert({ page_key: 'features', title: 'Features', content: '', metadata: { items: newList } });
-          console.log('[FeaturesTab] insert done, error:', error?.message ?? 'none');
-          if (error) throw new Error(error.message);
-        }
-        setFeatures(newList);
+        const created = await featuresHelper.create({ ...payload, order_position: maxPos + 1 });
+        setFeatures(prev => [...prev, created]);
       }
       setShowModal(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Άγνωστο σφάλμα';
-      console.error('[FeaturesTab] save error:', err);
       setSaveError(msg);
     } finally {
       setSaving(false);
