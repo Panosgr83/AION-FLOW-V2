@@ -88,13 +88,18 @@ function AboutTab() {
 
   const handleSave = async (key: string) => {
     setSaving(key);
-    const page = pages.find(p => p.key === key);
-    if (page) {
-      await pageContentHelper.upsert(key, { title: page.title || null, content: page.content });
+    try {
+      const page = pages.find(p => p.key === key);
+      if (page) {
+        await pageContentHelper.upsert(key, { title: page.title || null, content: page.content });
+      }
+      setSaved(key);
+      setTimeout(() => setSaved(null), 2000);
+    } catch (err) {
+      alert('Σφάλμα αποθήκευσης: ' + (err instanceof Error ? err.message : 'Άγνωστο σφάλμα'));
+    } finally {
+      setSaving(null);
     }
-    setSaving(null);
-    setSaved(key);
-    setTimeout(() => setSaved(null), 2000);
   };
 
   const updatePage = (key: string, field: 'title' | 'content', value: string) => {
@@ -187,17 +192,22 @@ function StatsTab() {
 
   const handleSave = async () => {
     setSaving(true);
-    const payload = { label: form.label, value: form.value, suffix: form.suffix || null, is_active: form.is_active };
-    if (editing) {
-      const updated = await statsCountersHelper.update(editing.id, payload);
-      setStats(prev => prev.map(s => s.id === editing.id ? updated : s));
-    } else {
-      const maxPos = stats.reduce((max, s) => Math.max(max, s.order_position), 0);
-      const created = await statsCountersHelper.create({ ...payload, order_position: maxPos + 1 });
-      setStats(prev => [...prev, created]);
+    try {
+      const payload = { label: form.label, value: form.value, suffix: form.suffix || null, is_active: form.is_active };
+      if (editing) {
+        const updated = await statsCountersHelper.update(editing.id, payload);
+        setStats(prev => prev.map(s => s.id === editing.id ? updated : s));
+      } else {
+        const maxPos = stats.reduce((max, s) => Math.max(max, s.order_position), 0);
+        const created = await statsCountersHelper.create({ ...payload, order_position: maxPos + 1 });
+        setStats(prev => [...prev, created]);
+      }
+      setShowModal(false);
+    } catch (err) {
+      alert('Σφάλμα αποθήκευσης: ' + (err instanceof Error ? err.message : 'Άγνωστο σφάλμα'));
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    setShowModal(false);
   };
 
   const handleDelete = async () => {
@@ -358,17 +368,22 @@ function FeaturesTab() {
 
   const handleSave = async () => {
     setSaving(true);
-    const payload = { icon: form.icon, title: form.title, description: form.description, is_active: form.is_active };
-    if (editing) {
-      const updated = await featuresHelper.update(editing.id, payload);
-      setFeatures(prev => prev.map(f => f.id === editing.id ? updated : f));
-    } else {
-      const maxPos = features.reduce((max, f) => Math.max(max, f.order_position), 0);
-      const created = await featuresHelper.create({ ...payload, order_position: maxPos + 1 });
-      setFeatures(prev => [...prev, created]);
+    try {
+      const payload = { icon: form.icon, title: form.title, description: form.description, is_active: form.is_active };
+      if (editing) {
+        const updated = await featuresHelper.update(editing.id, payload);
+        setFeatures(prev => prev.map(f => f.id === editing.id ? updated : f));
+      } else {
+        const maxPos = features.reduce((max, f) => Math.max(max, f.order_position), 0);
+        const created = await featuresHelper.create({ ...payload, order_position: maxPos + 1 });
+        setFeatures(prev => [...prev, created]);
+      }
+      setShowModal(false);
+    } catch (err) {
+      alert('Σφάλμα αποθήκευσης: ' + (err instanceof Error ? err.message : 'Άγνωστο σφάλμα'));
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    setShowModal(false);
   };
 
   const handleDelete = async () => {

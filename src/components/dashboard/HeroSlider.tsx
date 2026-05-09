@@ -49,28 +49,33 @@ export default function HeroSlider() {
 
   const handleSave = async () => {
     setSaving(true);
-    const payload = {
-      title: form.title,
-      subtitle: form.subtitle || null,
-      description: form.description,
-      image_url: form.image_url,
-      cta1_text: form.cta1_text || null,
-      cta1_link: form.cta1_link || null,
-      cta2_text: form.cta2_text || null,
-      cta2_link: form.cta2_link || null,
-      is_active: form.is_active,
-    };
+    try {
+      const payload = {
+        title: form.title,
+        subtitle: form.subtitle || null,
+        description: form.description,
+        image_url: form.image_url,
+        cta1_text: form.cta1_text || null,
+        cta1_link: form.cta1_link || null,
+        cta2_text: form.cta2_text || null,
+        cta2_link: form.cta2_link || null,
+        is_active: form.is_active,
+      };
 
-    if (editing) {
-      const updated = await slidesHelper.update(editing.id, payload);
-      setSlides(prev => prev.map(s => s.id === editing.id ? updated : s));
-    } else {
-      const maxPos = slides.reduce((max, s) => Math.max(max, s.order_position), 0);
-      const created = await slidesHelper.create({ ...payload, order_position: maxPos + 1 });
-      setSlides(prev => [...prev, created]);
+      if (editing) {
+        const updated = await slidesHelper.update(editing.id, payload);
+        setSlides(prev => prev.map(s => s.id === editing.id ? updated : s));
+      } else {
+        const maxPos = slides.reduce((max, s) => Math.max(max, s.order_position), 0);
+        const created = await slidesHelper.create({ ...payload, order_position: maxPos + 1 });
+        setSlides(prev => [...prev, created]);
+      }
+      setShowModal(false);
+    } catch (err) {
+      alert('Σφάλμα αποθήκευσης: ' + (err instanceof Error ? err.message : 'Άγνωστο σφάλμα'));
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    setShowModal(false);
   };
 
   const handleDelete = async () => {
