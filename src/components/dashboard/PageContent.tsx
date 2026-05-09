@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { FileText, Hash, Sparkles, Plus, Trash2, X, ChevronUp, ChevronDown, GripVertical, Eye, EyeOff, Save, Check, Heart, Star, Award, Clock, Coffee, Leaf, Sun, Shield, ThumbsUp, Users, Truck, MapPin, Phone, Gift, Flame, Crown, Target, Zap, Gem, type LucideIcon } from 'lucide-react';
 import { pageContentHelper, statsCountersHelper, featuresHelper } from '../../lib/dataHelpers';
 import { supabase } from '../../lib/supabase';
@@ -372,17 +372,11 @@ function FeaturesTab() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const savingRef = useRef(false);
-  const featuresRef = useRef<Feature[]>([]);
-
-  featuresRef.current = features;
 
   useEffect(() => {
-    let cancelled = false;
     featuresHelper.getAll()
-      .then(data => { if (!cancelled) { setFeatures(data); setLoading(false); } })
-      .catch(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .then(data => { setFeatures(data); setLoading(false); })
+      .catch(() => { setLoading(false); });
   }, []);
 
   const openAdd = () => { setEditing(null); setForm({ icon: 'Star', title: '', description: '', is_active: true }); setSaveError(null); setShowModal(true); };
@@ -393,26 +387,19 @@ function FeaturesTab() {
     setShowModal(true);
   };
 
-  const persistFeatures = useCallback(async (items: Feature[]) => {
-    const { error } = await supabase.from('page_contents')
-      .update({ metadata: { items }, updated_at: new Date().toISOString() })
-      .eq('page_key', 'features');
-    if (error) throw new Error(error.message);
-  }, []);
-
-  const handleSave = useCallback(async () => {
-    if (savingRef.current) return;
-    savingRef.current = true;
+  const handleSave = async () => {
     setSaving(true);
     setSaveError(null);
     try {
       const payload = { icon: form.icon, title: form.title, description: form.description, is_active: form.is_active };
       let newList: Feature[];
       if (editing) {
-        const updatedItem: Feature = { ...editing, ...payload, updated_at: new Date().toISOString() };
-        newList = featuresRef.current.map(f => f.id === editing.id ? updatedItem : f);
+        newList = features.map(f => f.id === editing.id
+          ? { ...f, ...payload, updated_at: new Date().toISOString() }
+          : f
+        );
       } else {
-        const maxPos = featuresRef.current.reduce((max, f) => Math.max(max, f.order_position), 0);
+        const maxPos = features.reduce((max, f) => Math.max(max, f.order_position), 0);
         const newItem: Feature = {
           id: crypto.randomUUID(),
           icon: form.icon,
@@ -423,9 +410,25 @@ function FeaturesTab() {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
-        newList = [...featuresRef.current, newItem];
+        newList = [...features, newItem];
       }
-      await persistFeatures(newList);
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/page_contents?page_key=eq.features`;
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const res = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${token}`,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({ metadata: { items: newList }, updated_at: new Date().toISOString() }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Save failed (${res.status}): ${errText}`);
+      }
       setFeatures(newList);
       setShowModal(false);
     } catch (err) {
@@ -433,36 +436,52 @@ function FeaturesTab() {
       setSaveError(msg);
     } finally {
       setSaving(false);
-      savingRef.current = false;
     }
-  }, [form, editing, persistFeatures]);
+  };
 
-  const handleDelete = useCallback(async () => {
+  const persistList = async (items: Feature[]) => {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/page_contents?page_key=eq.features`;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ metadata: { items }, updated_at: new Date().toISOString() }),
+    });
+    if (!res.ok) throw new Error(`Save failed (${res.status})`);
+  };
+
+  const handleDelete = async () => {
     if (!deleteId) return;
-    const newList = featuresRef.current.filter(f => f.id !== deleteId);
-    await persistFeatures(newList);
+    const newList = features.filter(f => f.id !== deleteId);
+    await persistList(newList);
     setFeatures(newList);
     setDeleteId(null);
-  }, [deleteId, persistFeatures]);
+  };
 
-  const toggleActive = useCallback(async (feature: Feature) => {
-    const newList = featuresRef.current.map(f =>
+  const toggleActive = async (feature: Feature) => {
+    const newList = features.map(f =>
       f.id === feature.id ? { ...f, is_active: !f.is_active, updated_at: new Date().toISOString() } : f
     );
     setFeatures(newList);
-    await persistFeatures(newList);
-  }, [persistFeatures]);
+    await persistList(newList);
+  };
 
-  const moveItem = useCallback(async (id: string, direction: 'up' | 'down') => {
-    const idx = featuresRef.current.findIndex(f => f.id === id);
-    if ((direction === 'up' && idx === 0) || (direction === 'down' && idx === featuresRef.current.length - 1)) return;
+  const moveItem = async (id: string, direction: 'up' | 'down') => {
+    const idx = features.findIndex(f => f.id === id);
+    if ((direction === 'up' && idx === 0) || (direction === 'down' && idx === features.length - 1)) return;
     const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-    const newList = [...featuresRef.current];
+    const newList = [...features];
     [newList[idx], newList[swapIdx]] = [newList[swapIdx], newList[idx]];
     const reordered = newList.map((f, i) => ({ ...f, order_position: i + 1 }));
     setFeatures(reordered);
-    await persistFeatures(reordered);
-  }, [persistFeatures]);
+    await persistList(reordered);
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>;
